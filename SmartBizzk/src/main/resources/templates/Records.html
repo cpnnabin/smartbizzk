@@ -1,10 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Records - SmartBizK</title>
 </head>
 <body>
+<h1>Transaction Records</h1>
 
+<table border="1">
+    <thead>
+    <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Party</th>
+        <th>Amount</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="record : ${records}">
+        <td th:text="${record.date}">Date</td>
+        <td th:text="${record.type}">Type</td>
+        <td th:text="${record.party}">Party</td>
+        <td th:text="${record.amount}">Amount</td>
+    </tr>
+    </tbody>
+</table>
+
+<a href="/dashboard">Back to Dashboard</a>
 </body>
 </html>

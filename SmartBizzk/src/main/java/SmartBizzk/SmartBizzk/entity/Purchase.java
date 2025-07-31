@@ -3,19 +3,23 @@ package SmartBizzk.SmartBizzk.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Entity
 @Data
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "items")
-public class Item {
+@Builder
+public class Purchase {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
-    private String description;
-    private Double price;
+    private String supplierName;
+    private LocalDate purchaseDate;
+
+    private String itemName;
+    private Integer quantity;
+    private Double totalCost;
 }

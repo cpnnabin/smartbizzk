@@ -2,20 +2,23 @@ package SmartBizzk.SmartBizzk.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDate;
 
 @Entity
 @Data
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "items")
-public class Item {
+public class PaymentOut {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
+    private String partyName;
+
+    private Double amount;
+
     private String description;
-    private Double price;
+
+    private LocalDate date;
 }

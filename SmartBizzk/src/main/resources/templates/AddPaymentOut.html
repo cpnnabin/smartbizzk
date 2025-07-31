@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Payment Out</title>
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-4">
+  <h2 th:text="${paymentOut.id == null} ? 'Add Payment Out' : 'Edit Payment Out'"></h2>
+  <form th:action="${paymentOut.id == null} ? @{/payments-out/add} : @{'/payments-out/update/' + ${paymentOut.id}}" th:object="${paymentOut}" method="post">
+    <div class="mb-3">
+      <label>Party Name</label>
+      <input type="text" th:field="*{partyName}" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label>Amount</label>
+      <input type="number" step="0.01" th:field="*{amount}" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label>Description</label>
+      <input type="text" th:field="*{description}" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label>Date</label>
+      <input type="date" th:field="*{date}" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label>Payment Method</label>
+      <select th:field="*{paymentMethod}" class="form-control">
+        <option value="Cash">Cash</option>
+        <option value="Bank">Bank</option>
+        <option value="Cheque">Cheque</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-success">Save</button>
+    <a href="/payments-out" class="btn btn-secondary">Back</a>
+  </form>
+</div>
+</body>
+</html>

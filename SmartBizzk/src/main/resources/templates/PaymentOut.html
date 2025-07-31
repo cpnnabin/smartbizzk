@@ -1,10 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Payment Out List</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
 </head>
 <body>
-
+<div class="container mt-4">
+    <h2>Payment Out</h2>
+    <a class="btn btn-primary mb-3" href="/payments-out/add">+ Add Payment</a>
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>Party</th>
+            <th>Amount</th>
+            <th>Description</th>
+            <th>Date</th>
+            <th>Method</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="payment : ${payments}">
+            <td th:text="${payment.partyName}"></td>
+            <td th:text="${payment.amount}"></td>
+            <td th:text="${payment.description}"></td>
+            <td th:text="${payment.date}"></td>
+            <td th:text="${payment.paymentMethod}"></td>
+            <td>
+                <a th:href="@{'/payments-out/edit/' + ${payment.id}}" class="btn btn-sm btn-warning">Edit</a>
+                <a th:href="@{'/payments-out/delete/' + ${payment.id}}" class="btn btn-sm btn-danger"
+                   onclick="return confirm('Delete?')">Delete</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
 </body>
 </html>

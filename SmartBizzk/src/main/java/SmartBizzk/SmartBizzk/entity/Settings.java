@@ -5,17 +5,19 @@ import lombok.*;
 
 @Entity
 @Data
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "items")
-public class Item {
+@Builder
+public class Settings {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
-    private String description;
-    private Double price;
+    private String companyName;
+    private String currency;
+    private String theme; // light or dark
+
+    private String email;
+    private String phone;
 }

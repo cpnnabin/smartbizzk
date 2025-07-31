@@ -5,17 +5,18 @@ import lombok.*;
 
 @Entity
 @Data
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "items")
-public class Item {
+@Table(name = "parties")
+public class Party {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
-    private String description;
-    private Double price;
+    private String phone;
+    private String email;
+    private String address;
+    private String vat;
+    private String type; // Customer or Supplier
 }

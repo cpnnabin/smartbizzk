@@ -435,15 +435,16 @@
         <div class="brand-icon">
             <i class="fas fa-chart-line"></i>
         </div>
-        <span>SmartBiz</span>
+        <span>SmartBizz</span>
     </div>
 
     <nav>
-        <a href="#"><i class="fas fa-home"></i> Home</a>
-        <a href="#"><i class="fas fa-star"></i> Features</a>
-        <a href="#"><i class="fas fa-book"></i> Resources</a>
-        <a href="#"><i class="fas fa-envelope"></i> Contact</a>
+        <a th:href="@{/home}"><i class="fas fa-home"></i> Home</a>
+        <a th:href="@{/features}"><i class="fas fa-star"></i> Features</a>
+        <a th:href="@{/resources}"><i class="fas fa-book"></i> Resources</a>
+        <a th:href="@{/contact}"><i class="fas fa-envelope"></i> Contact</a>
     </nav>
+
 
     <button
             class="toggle-btn"
@@ -477,36 +478,33 @@
                 role="menu"
                 aria-labelledby="profileBtn"
         >
-            <a href="#" role="menuitem">Profile</a>
-            <a href="#" role="menuitem">Settings</a>
+            <a th:href="@{/profile}" role="menuitem">Profile</a>
+            <a th:href="@{/settings}" role="menuitem">Settings</a>
             <div class="dropdown-divider"></div>
-            <a href="#" role="menuitem" id="logoutBtn" style="color: #e55353"
-            >Logout</a
-            >
+            <a th:href="@{/logout}" role="menuitem" id="logoutBtn" style="color: #e55353">Logout</a>
         </div>
+
     </div>
 </header>
 
 <div class="container">
     <aside>
         <div class="sidebar-heading">Main</div>
-        <a class="sidebar-link active" href="#"
-        ><i class="fas fa-tachometer-alt"></i> Dashboard</a
-        >
-        <a class="sidebar-link" href="#"><i class="fas fa-users"></i> Parties</a>
-        <a class="sidebar-link" href="#"><i class="fas fa-box"></i> Items</a>
+        <a class="sidebar-link active" th:href="@{/dashboard}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a class="sidebar-link" th:href="@{/parties}"><i class="fas fa-users"></i> Parties</a>
+        <a class="sidebar-link" th:href="@{/items}"><i class="fas fa-box"></i> Items</a>
 
         <div class="sidebar-heading">Transactions</div>
-        <a class="sidebar-link" href="#"
-        ><i class="fas fa-shopping-cart"></i> Sales Invoice</a
-        >
-        <a class="sidebar-link" href="#"><i class="fas fa-shopping-bag"></i> Purchase</a>
-        <a class="sidebar-link" href="#"><i class="fas fa-arrow-down"></i> Payment In</a>
-        <a class="sidebar-link" href="#"><i class="fas fa-arrow-up"></i> Payment Out</a>
-        <a class="sidebar-link" href="#"><i class="fas fa-receipt"></i> Expenses</a>
+        <a class="sidebar-link" th:href="@{/sales}"><i class="fas fa-shopping-cart"></i> Sales Invoice</a>
+        <a class="sidebar-link" th:href="@{/purchase}"><i class="fas fa-shopping-bag"></i> Purchase</a>
+        <a class="sidebar-link" th:href="@{/payment-in}"><i class="fas fa-arrow-down"></i> Payment In</a>
+        <a class="sidebar-link" th:href="@{/payment-out}"><i class="fas fa-arrow-up"></i> Payment Out</a>
+        <a class="sidebar-link" th:href="@{/expenses}"><i class="fas fa-receipt"></i> Expenses</a>
 
         <div class="sidebar-heading">Reports</div>
-        <a class="sidebar-link" href="#"><i class="fas fa-chart-bar"></i> Reports</a>
+        <a class="sidebar-link" th:href="@{/reports}"><i class="fas fa-chart-bar"></i> Reports</a>
+
+
     </aside>
 
     <main>
