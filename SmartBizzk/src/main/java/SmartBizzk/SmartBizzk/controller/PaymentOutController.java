@@ -32,6 +32,20 @@ public class PaymentOutController {
         return "redirect:/payment-out/list";
     }
 
+    @GetMapping("/edit/{id}")
+    public String editForm(@PathVariable Long id, Model model) {
+        PaymentOut paymentOut = service.findById(id);
+        model.addAttribute("paymentOut", paymentOut);
+        return "paymentout/edit";
+    }
+
+    @PostMapping("/update/{id}")
+    public String update(@PathVariable Long id, @ModelAttribute PaymentOut paymentOut) {
+        paymentOut.setId(id);
+        service.save(paymentOut);
+        return "redirect:/payment-out/list";
+    }
+
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable Long id) {
         service.delete(id);
