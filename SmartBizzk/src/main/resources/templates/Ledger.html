@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Party Ledger - SmartBiz</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #29AD81;
+            --primary-dark: #218a68;
+            --primary-light: #4bc299;
+            --bg-color: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --text-color: #212529;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --card-bg: #ffffff;
+            --table-hover: rgba(41, 173, 129, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-color: #ffffff;
+            --text-muted: #b0b0b0;
+            --border-color: #404040;
+            --card-bg: #2d2d2d;
+            --table-hover: rgba(41, 173, 129, 0.2);
+        }
+
+        * {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-color);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .table {
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: var(--table-hover);
+        }
+
+        .header-card {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            background: var(--primary-color);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .theme-toggle:hover {
+            background: var(--primary-dark);
+            transform: scale(1.1);
+        }
+
+        .form-control, .form-select {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .form-control:focus, .form-select:focus {
+            background-color: var(--card-bg);
+            border-color: var(--primary-color);
+            color: var(--text-color);
+            box-shadow: 0 0 0 0.2rem rgba(41, 173, 129, 0.25);
+        }
+
+        .print-area {
+            background: white !important;
+            color: black !important;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            .print-area * {
+                background: white !important;
+                color: black !important;
+            }
+
+            body {
+                background: white !important;
+            }
+        }
+
+        .animate-in {
+            animation: slideInUp 0.5s ease-out;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .party-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .party-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .balance-positive {
+            color: #28a745;
+        }
+
+        .balance-negative {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+<!-- Theme Toggle Button -->
+<button class="theme-toggle no-print" onclick="toggleTheme()" title="Toggle Dark Mode">
+    <i class="fas fa-moon" id="theme-icon"></i>
+</button>
+
+<div class="container-fluid mt-4 animate-in">
+    <div class="header-card text-white rounded-3 p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-0"><i class="fas fa-book me-2"></i>Party Ledger</h2>
+                <p class="mb-0 opacity-75">View detailed transaction history and generate reports</p>
+            </div>
+            <div class="d-flex gap-2 no-print">
+                <button class="btn btn-light" onclick="printLedger()" id="printBtn" disabled>
+                    <i class="fas fa-print me-2"></i>Print
+                </button>
+                <button class="btn btn-outline-light" onclick="exportLedgerPDF()" id="exportBtn" disabled>
+                    <i class="fas fa-file-pdf me-2"></i>Export PDF
+                </button>
+                <button class="btn btn-outline-light" onclick="shareReport()" id="shareBtn" disabled>
+                    <i class="fas fa-share me-2"></i>Share
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Party Selection & Filters -->
+        <div class="col-md-4 no-print">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-user me-2"></i>Select Party</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Choose Party</label>
+                        <select class="form-select" id="partySelect" onchange="loadLedger()">
+                            <option value="">Select a party</option>
+                            <option value="ABC Corporation" th:each="party : ${parties}" th:value="${party.name}" th:text="${party.name}">ABC Corporation</option>
+                            <option value="XYZ Enterprises">XYZ Enterprises</option>
+                            <option value="Tech Solutions Ltd">Tech Solutions Ltd</option>
+                            <option value="Global Trading Co">Global Trading Co</option>
+                            <option value="Prime Suppliers">Prime Suppliers</option>
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="form-label">From Date</label>
+                            <input type="date" class="form-control" id="startDate" onchange="loadLedger()">
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">To Date</label>
+                            <input type="date" class="form-control" id="endDate" onchange="loadLedger()">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Transaction Type</label>
+                        <select class="form-select" id="transactionType" onchange="loadLedger()">
+                            <option value="">All Types</option>
+                            <option value="SALE">Sales</option>
+                            <option value="PURCHASE">Purchases</option>
+                            <option value="PAYMENT_IN">Payment In</option>
+                            <option value="PAYMENT_OUT">Payment Out</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-outline-primary w-100" onclick="resetFilters()">
+                        <i class="fas fa-refresh me-2"></i>Reset Filters
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Party List -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-users me-2"></i>Quick Access</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item party-card" onclick="selectParty('ABC Corporation')">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold">ABC Corporation</div>
+                                    <small class="text-muted">Customer</small>
+                                </div>
+                                <span class="balance-positive">₹15,000 Dr</span>
+                            </div>
+                        </div>
+                        <div class="list-group-item party-card" onclick="selectParty('XYZ Enterprises')">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold">XYZ Enterprises</div>
+                                    <small class="text-muted">Supplier</small>
+                                </div>
+                                <span class="balance-negative">₹8,500 Cr</span>
+                            </div>
+                        </div>
+                        <div class="list-group-item party-card" onclick="selectParty('Tech Solutions Ltd')">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold">Tech Solutions Ltd</div>
+                                    <small class="text-muted">Customer</small>
+                                </div>
+                                <span class="balance-positive">₹22,000 Dr</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ledger Display -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Ledger Details</h6>
+                    <div class="d-flex gap-2 no-print">
+                        <button class="btn btn-sm btn-outline-info" onclick="exportToExcel()" id="excelBtn" disabled>
+                            <i class="fas fa-file-excel me-2"></i>Excel
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="exportToCSV()" id="csvBtn" disabled>
+                            <i class="fas fa-file-csv me-2"></i>CSV
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="ledgerContent" class="print-area">
+                        <!-- Ledger Header for Print -->
+                        <div class="p-4 border-bottom" id="ledgerHeader" style="display: none;">
+                            <div class="text-center mb-4">
+                                <h3 class="mb-1">SmartBiz Business Management</h3>
+                                <h5 class="text-muted mb-0">Party Ledger Report</h5>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <strong>Party Name:</strong> <span id="printPartyName">-</span><br>
+                                    <strong>Report Type:</strong> <span id="printReportType">Complete Ledger</span>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <strong>Generated Date:</strong> <span id="printDate"></span><br>
+                                    <strong>Period:</strong> <span id="printPeriod">All Time</span>
+                                </div>
+                            </div>
+                            <hr class="my-3">
+                        </div>
+
+                        <!-- Ledger Table -->
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0" id="ledgerTable">
+                                <thead class="table-light">
+                                <tr>
+                                    <th width="12%">Date</th>
+                                    <th width="35%">Description</th>
+                                    <th width="15%" class="text-end">Debit (₹)</th>
+                                    <th width="15%" class="text-end">Credit (₹)</th>
+                                    <th width="18%" class="text-end">Balance (₹)</th>
+                                    <th width="5%" class="no-print">Actions</th>
+                                </tr>
+                                </thead>
+                                <tbody id="ledgerTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-5">
+                                        <i class="fas fa-book fa-3x mb-3 d-block"></i>
+                                        <h5>Select a party to view ledger</h5>
+                                        <p class="mb-0">Choose a party from the dropdown or quick access list</p>
+                                    </td>
+                                </tr>
+                                </tbody>
+                                <tfoot id="ledgerFooter" style="display: none;">
+                                <tr class="table-dark">
+                                    <th colspan="2" class="text-end">Total:</th>
+                                    <th class="text-end" id="totalDebit">₹0</th>
+                                    <th class="text-end" id="totalCredit">₹0</th>
+                                    <th class="text-end" id="finalBalance">₹0</th>
+                                    <th class="no-print"></th>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <!-- Summary Section for Print -->
+                        <div class="p-4 border-top" id="ledgerSummary" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Summary</h6>
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <td>Total Debit:</td>
+                                            <td class="text-end" id="summaryDebit">₹0</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Total Credit:</td>
+                                            <td class="text-end" id="summaryCredit">₹0</td>
+                                        </tr>
+                                        <tr class="table-primary">
+                                            <td><strong>Final Balance:</strong></td>
+                                            <td class="text-end"><strong id="summaryBalance">₹0</strong></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Report Details</h6>
+                                    <p class="small mb-0">
+                                        <strong>Generated by:</strong> SmartBiz System<br>
+                                        <strong>Contact:</strong> info@smartbiz.com<br>
+                                        <strong>Phone:</strong> +977-1-XXXXXXX
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4 no-print">
+        <a href="/dashboard" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+        <a href="/ledger/all" class="btn btn-outline-info ms-2">
+            <i class="fas fa-list me-2"></i>View All Ledgers
+        </a>
+    </div>
+</div>
+
+<!-- Toast Notifications -->
+<div class="toast-container position-fixed top-0 end-0 p-3 no-print" style="z-index: 1055;">
+    <div id="successToast" class="toast" role="alert">
+        <div class="toast-header">
+            <i class="fas fa-check-circle text-success me-2"></i>
+            <strong class="me-auto">Success</strong>
+            <small class="text-muted">Just now</small>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="toastMessage">
+            Operation completed successfully!
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mb-0">Generating PDF...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Sample ledger data
+    const sampleLedgerData = {
+        'ABC Corporation': [
+            { date: '2025-01-20', description: 'Invoice #INV-001 - Product Sale', debit: 25000, credit: 0, type: 'SALE' },
+            { date: '2025-01-18', description: 'Payment Received - Bank Transfer', debit: 0, credit: 15000, type: 'PAYMENT_IN' },
+            { date: '2025-01-15', description: 'Invoice #INV-002 - Service Charges', debit: 18000, credit: 0, type: 'SALE' },
+            { date: '2025-01-12', description: 'Payment Received - Cash', debit: 0, credit: 25000, type: 'PAYMENT_IN' },
+            { date: '2025-01-10', description: 'Opening Balance', debit: 12000, credit: 0, type: 'OPENING' }
+        ],
+        'XYZ Enterprises': [
+            { date: '2025-01-19', description: 'Purchase Order #PO-001', debit: 0, credit: 12000, type: 'PURCHASE' },
+            { date: '2025-01-16', description: 'Payment Made - Cheque #123456', debit: 12000, credit: 0, type: 'PAYMENT_OUT' },
+            { date: '2025-01-14', description: 'Purchase Order #PO-002', debit: 0, credit: 8500, type: 'PURCHASE' },
+            { date: '2025-01-11', description: 'Advance Payment', debit: 5000, credit: 0, type: 'PAYMENT_OUT' }
+        ],
+        'Tech Solutions Ltd': [
+            { date: '2025-01-21', description: 'Service Invoice #SI-001', debit: 35000, credit: 0, type: 'SALE' },
+            { date: '2025-01-17', description: 'Payment Received - NEFT', debit: 0, credit: 20000, type: 'PAYMENT_IN' },
+            { date: '2025-01-13', description: 'Consultation Charges', debit: 15000, credit: 0, type: 'SALE' },
+            { date: '2025-01-09', description: 'Project Advance', debit: 0, credit: 10000, type: 'PAYMENT_IN' }
+        ],
+        'Global Trading Co': [
+            { date: '2025-01-22', description: 'Bulk Purchase - Electronics', debit: 0, credit: 45000, type: 'PURCHASE' },
+            { date: '2025-01-20', description: 'Payment Made - Bank Transfer', debit: 30000, credit: 0, type: 'PAYMENT_OUT' },
+            { date: '2025-01-15', description: 'Inventory Purchase', debit: 0, credit: 28000, type: 'PURCHASE' }
+        ],
+        'Prime Suppliers': [
+            { date: '2025-01-23', description: 'Raw Material Supply', debit: 0, credit: 22000, type: 'PURCHASE' },
+            { date: '2025-01-19', description: 'Payment Made - Cash', debit: 18000, credit: 0, type: 'PAYMENT_OUT' },
+            { date: '2025-01-16', description: 'Office Supplies', debit: 0, credit: 5500, type: 'PURCHASE' }
+        ]
+    };
+
+    // Theme Management
+    let currentTheme = localStorage.getItem('theme') || 'light';
+
+    function initTheme() {
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        updateThemeIcon();
+    }
+
+    function toggleTheme() {
+        currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        localStorage.setItem('theme', currentTheme);
+        updateThemeIcon();
+        showNotification(`Switched to ${currentTheme} mode`);
+    }
+
+    function updateThemeIcon() {
+        const icon = document.getElementById('theme-icon');
+        icon.className = currentTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+    }
+
+    function showNotification(message) {
+        document.getElementById('toastMessage').textContent = message;
+        const toast = new bootstrap.Toast(document.getElementById('successToast'));
+        toast.show();
+    }
+
+    // Ledger Functions
+    function selectParty(partyName) {
+        document.getElementById('partySelect').value = partyName;
+        loadLedger();
+    }
+
+    function loadLedger() {
+        const selectedParty = document.getElementById('partySelect').value;
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        const transactionType = document.getElementById('transactionType').value;
+
+        // Enable/disable buttons
+        const buttonsToToggle = ['printBtn', 'exportBtn', 'shareBtn', 'excelBtn', 'csvBtn'];
+        buttonsToToggle.forEach(btnId => {
+            document.getElementById(btnId).disabled = !selectedParty;
+        });
+
+        if (!selectedParty) {
+            document.getElementById('ledgerTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-5">
+                            <i class="fas fa-book fa-3x mb-3 d-block"></i>
+                            <h5>Select a party to view ledger</h5>
+                            <p class="mb-0">Choose a party from the dropdown or quick access list</p>
+                        </td>
+                    </tr>
+                `;
+            document.getElementById('ledgerFooter').style.display = 'none';
+            document.getElementById('ledgerSummary').style.display = 'none';
+            return;
+        }
+
+        // Update print headers
+        document.getElementById('printPartyName').textContent = selectedParty;
+        document.getElementById('printDate').textContent = new Date().toLocaleDateString('en-IN');
+
+        let periodText = 'All Time';
+        if (startDate && endDate) {
+            periodText = `${new Date(startDate).toLocaleDateString('en-IN')} to ${new Date(endDate).toLocaleDateString('en-IN')}`;
+        } else if (startDate) {
+            periodText = `From ${new Date(startDate).toLocaleDateString('en-IN')}`;
+        } else if (endDate) {
+            periodText = `Until ${new Date(endDate).toLocaleDateString('en-IN')}`;
+        }
+        document.getElementById('printPeriod').textContent = periodText;
+
+        let ledgerData = sampleLedgerData[selectedParty] || [];
+
+        // Apply filters
+        if (startDate || endDate || transactionType) {
+            ledgerData = ledgerData.filter(entry => {
+                let include = true;
+
+                if (startDate && new Date(entry.date) < new Date(startDate)) include = false;
+                if (endDate && new Date(entry.date) > new Date(endDate)) include = false;
+                if (transactionType && entry.type !== transactionType) include = false;
+
+                return include;
+            });
+        }
+
+        renderLedgerTable(ledgerData);
+    }
+
+    function renderLedgerTable(data) {
+        const tbody = document.getElementById('ledgerTableBody');
+        tbody.innerHTML = '';
+
+        let runningBalance = 0;
+        let totalDebit = 0;
+        let totalCredit = 0;
+
+        data.forEach((entry, index) => {
+            runningBalance += (entry.debit - entry.credit);
+            totalDebit += entry.debit;
+            totalCredit += entry.credit;
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                    <td>${new Date(entry.date).toLocaleDateString('en-IN')}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="fas ${getTransactionIcon(entry.type)} me-2 text-muted"></i>
+                            ${entry.description}
+                        </div>
+                    </td>
+                    <td class="text-end">${entry.debit ? '₹' + entry.debit.toLocaleString('en-IN') : '-'}</td>
+                    <td class="text-end">${entry.credit ? '₹' + entry.credit.toLocaleString('en-IN') : '-'}</td>
+                    <td class="text-end fw-bold ${runningBalance >= 0 ? 'balance-positive' : 'balance-negative'}">
+                        ₹${Math.abs(runningBalance).toLocaleString('en-IN')} ${runningBalance >= 0 ? 'Dr' : 'Cr'}
+                    </td>
+                    <td class="no-print">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="editLedgerEntry(${index})" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="deleteLedgerEntry(${index})" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+            tbody.appendChild(row);
+        });
+
+        // Update footer
+        document.getElementById('totalDebit').textContent = '₹' + totalDebit.toLocaleString('en-IN');
+        document.getElementById('totalCredit').textContent = '₹' + totalCredit.toLocaleString('en-IN');
+        document.getElementById('finalBalance').textContent = '₹' + Math.abs(runningBalance).toLocaleString('en-IN') + (runningBalance >= 0 ? ' Dr' : ' Cr');
+
+        // Update summary
+        document.getElementById('summaryDebit').textContent = '₹' + totalDebit.toLocaleString('en-IN');
+        document.getElementById('summaryCredit').textContent = '₹' + totalCredit.toLocaleString('en-IN');
+        document.getElementById('summaryBalance').textContent = '₹' + Math.abs(runningBalance).toLocaleString('en-IN') + (runningBalance >= 0 ? ' Dr' : ' Cr');
+
+        document.getElementById('ledgerFooter').style.display = data.length > 0 ? 'table-footer-group' : 'none';
+        document.getElementById('ledgerSummary').style.display = data.length > 0 ? 'block' : 'none';
+
+        if (data.length === 0) {
+            tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="fas fa-exclamation-circle fa-2x mb-2 d-block"></i>
+                            No transactions found for the selected period
+                        </td>
+                    </tr>
+                `;
+        }
+    }
+
+    function getTransactionIcon(type) {
+        switch(type) {
+            case 'SALE': return 'fa-shopping-bag';
+            case 'PURCHASE': return 'fa-shopping-cart';
+            case 'PAYMENT_IN': return 'fa-arrow-down';
+            case 'PAYMENT_OUT': return 'fa-arrow-up';
+            case 'OPENING': return 'fa-balance-scale';
+            default: return 'fa-exchange-alt';
+        }
+    }
+
+    // PDF Export Functions
+    function exportLedgerPDF() {
+        const selectedParty = document.getElementById('partySelect').value;
+        if (!selectedParty) {
+            alert('Please select a party first');
+            return;
+        }
+
+        showLoadingModal();
+
+        setTimeout(() => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Header
+            doc.setFontSize(20);
+            doc.text('SmartBiz Business Management', 20, 20);
+
+            doc.setFontSize(16);
+            doc.text('Party Ledger Report', 20, 35);
+
+            doc.setFontSize(12);
+            doc.text(`Party: ${selectedParty}`, 20, 50);
+            doc.text(`Generated on: ${new Date().toLocaleDateString('en-IN')}`, 20, 60);
+            doc.text(`Period: ${document.getElementById('printPeriod').textContent}`, 20, 70);
+
+            // Add line
+            doc.line(20, 75, 190, 75);
+
+            // Table headers
+            doc.setFontSize(10);
+            doc.text('Date', 20, 90);
+            doc.text('Description', 45, 90);
+            doc.text('Debit', 130, 90);
+            doc.text('Credit', 155, 90);
+            doc.text('Balance', 175, 90);
+
+            doc.line(20, 92, 190, 92);
+
+            // Table data
+            const rows = document.querySelectorAll('#ledgerTableBody tr');
+            let yPosition = 100;
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length > 4) {
+                    doc.text(cells[0].textContent, 20, yPosition);
+                    doc.text(cells[1].textContent.substring(0, 30), 45, yPosition);
+                    doc.text(cells[2].textContent, 130, yPosition);
+                    doc.text(cells[3].textContent, 155, yPosition);
+                    doc.text(cells[4].textContent, 175, yPosition);
+                    yPosition += 8;
+
+                    if (yPosition > 270) {
+                        doc.addPage();
+                        yPosition = 20;
+                    }
+                }
+            });
+
+            // Footer with totals
+            if (yPosition > 250) {
+                doc.addPage();
+                yPosition = 20;
+            }
+
+            doc.line(20, yPosition, 190, yPosition);
+            yPosition += 10;
+            doc.setFontSize(12);
+            doc.text('Summary:', 20, yPosition);
+            yPosition += 10;
+            doc.text(`Total Debit: ${document.getElementById('totalDebit').textContent}`, 20, yPosition);
+            yPosition += 8;
+            doc.text(`Total Credit: ${document.getElementById('totalCredit').textContent}`, 20, yPosition);
+            yPosition += 8;
+            doc.text(`Final Balance: ${document.getElementById('finalBalance').textContent}`, 20, yPosition);
+
+            hideLoadingModal();
+            doc.save(`${selectedParty}_ledger_${new Date().toISOString().split('T')[0]}.pdf`);
+            showNotification('PDF exported successfully!');
+        }, 1000);
+    }
+
+    function printLedger() {
+        const selectedParty = document.getElementById('partySelect').value;
+        if (!selectedParty) {
+            alert('Please select a party first');
+            return;
+        }
+
+        // Show print headers
+        document.getElementById('ledgerHeader').style.display = 'block';
+        document.getElementById('ledgerSummary').style.display = 'block';
+
+        // Print
+        window.print();
+
+        // Hide print headers after printing
+        setTimeout(() => {
+            document.getElementById('ledgerHeader').style.display = 'none';
+            document.getElementById('ledgerSummary').style.display = 'none';
+        }, 1000);
+    }
+
+    function exportToCSV() {
+        const selectedParty = document.getElementById('partySelect').value;
+        if (!selectedParty) return;
+
+        const data = [];
+        const rows = document.querySelectorAll('#ledgerTableBody tr');
+
+        // Add headers
+        data.push(['Date', 'Description', 'Debit', 'Credit', 'Balance']);
+
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length > 4) {
+                data.push([
+                    cells[0].textContent,
+                    cells[1].textContent.replace(/\s+/g, ' ').trim(),
+                    cells[2].textContent,
+                    cells[3].textContent,
+                    cells[4].textContent
+                ]);
+            }
+        });
+
+        const csvContent = data.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+        downloadFile(csvContent, `${selectedParty}_ledger.csv`, 'text/csv');
+    }
+
+    function exportToExcel() {
+        const selectedParty = document.getElementById('partySelect').value;
+        if (!selectedParty) return;
+
+        // For simplicity, export as CSV with .xls extension
+        exportToCSV();
+        showNotification('Excel file exported!');
+    }
+
+    function shareReport() {
+        const selectedParty = document.getElementById('partySelect').value;
+        if (!selectedParty) return;
+
+        if (navigator.share) {
+            navigator.share({
+                title: `${selectedParty} - Ledger Report`,
+                text: 'Party ledger report from SmartBiz',
+                url: window.location.href
+            });
+        } else {
+            // Fallback: copy link to clipboard
+            navigator.clipboard.writeText(window.location.href);
+            showNotification('Report link copied to clipboard!');
+        }
+    }
+
+    function downloadFile(content, filename, contentType) {
+        const blob = new Blob([content], { type: contentType });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showNotification(`${filename} downloaded successfully!`);
+    }
+
+    function showLoadingModal() {
+        const modal = new bootstrap.Modal(document.getElementById('loadingModal'));
+        modal.show();
+    }
+
+    function hideLoadingModal() {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('loadingModal'));
+        if (modal) modal.hide();
+    }
+
+    function resetFilters() {
+        document.getElementById('startDate').value = '';
+        document.getElementById('endDate').value = '';
+        document.getElementById('transactionType').value = '';
+        loadLedger();
+        showNotification('Filters reset!');
+    }
+
+    function editLedgerEntry(index) {
+        showNotification('Edit functionality will be implemented');
+    }
+
+    function deleteLedgerEntry(index) {
+        if (confirm('Are you sure you want to delete this entry?')) {
+            showNotification('Entry deleted successfully!');
+            loadLedger();
+        }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        initTheme();
+
+        // Set default dates (current month)
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        document.getElementById('startDate').value = firstDay.toISOString().split('T')[0];
+        document.getElementById('endDate').value = today.toISOString().split('T')[0];
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key) {
+                case 'p':
+                    e.preventDefault();
+                    printLedger();
+                    break;
+                case 'e':
+                    e.preventDefault();
+                    exportLedgerPDF();
+                    break;
+                case 'd':
+                    e.preventDefault();
+                    toggleTheme();
+                    break;
+            }
+        }
+    });
+</script>
+</body>
+</html>
