@@ -1,9 +1,33 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head><title>My Profile</title></head>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Profile - SmartBiz Manager</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/custom.css}">
+</head>
 <body>
-<h1>My Profile</h1>
-<p><strong>Username:</strong> <span th:text="${user.username}">username</span></p>
-<p><strong>Role:</strong> <span th:text="${user.role}">role</span></p>
+<div class="container py-5">
+    <div class="card mx-auto" style="max-width: 600px;">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">My Profile</h3>
+        </div>
+        <div class="card-body">
+            <div class="text-center mb-4">
+                <img th:src="@{/images/default-profile.png}" alt="Profile Picture" class="rounded-circle" width="120">
+            </div>
+            <p><strong>Username:</strong> <span th:text="${user.username}">username</span></p>
+            <p><strong>Full Name:</strong> <span th:text="${user.firstName + ' ' + user.lastName}">Full Name</span></p>
+            <p><strong>Email:</strong> <span th:text="${user.email}">email</span></p>
+            <p><strong>Phone:</strong> <span th:text="${user.phoneNumber}">phone</span></p>
+            <p><strong>Role:</strong> <span th:text="${user.role}">role</span></p>
+        </div>
+        <div class="card-footer text-end">
+            <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
 </body>
 </html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>All Party Ledgers</title>
+</head>
+<body>
+<h2>All Party Ledgers</h2>
+<table border="1">
+    <thead>
+    <tr>
+        <th>Party</th>
+        <th>Type</th>
+        <th>Amount</th>
+        <th>Date</th>
+        <th>Remarks</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="ledger : ${ledgers}">
+        <td th:text="${ledger.partyName}"></td>
+        <td th:text="${ledger.transactionType}"></td>
+        <td th:text="${ledger.amount}"></td>
+        <td th:text="${ledger.transactionDate}"></td>
+        <td th:text="${ledger.remarks}"></td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

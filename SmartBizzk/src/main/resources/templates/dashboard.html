@@ -831,6 +831,35 @@
                 <div class="card-header-custom">
                     <i class="fas fa-bell me-2"></i>Notifications
                 </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card text-white bg-primary">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Stock In</h5>
+                                <p class="card-text" th:text="${stockIn}">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card text-white bg-danger">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Stock Out</h5>
+                                <p class="card-text" th:text="${stockOut}">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card text-white bg-success">
+                            <div class="card-body">
+                                <h5 class="card-title">Available Stock</h5>
+                                <p class="card-text" th:text="${stockTotal}">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card-body-custom">
                     <div class="alert alert-warning mb-2" role="alert">
                         <small><i class="fas fa-exclamation-triangle me-1"></i> 3 invoices are overdue</small>

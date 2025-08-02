@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <title>Stock List</title>
+</head>
+<body>
+<h2>Stock List</h2>
+<a th:href="@{/stocks/new}">Add New Stock</a>
+<table border="1">
+    <tr>
+        <th>Item</th>
+        <th>Category</th>
+        <th>Quantity</th>
+        <th>Unit</th>
+        <th>Status</th>
+        <th>Remarks</th>
+        <th>Actions</th>
+    </tr>
+    <tr th:each="stock : ${stocks}">
+        <td th:text="${stock.itemName}"></td>
+        <td th:text="${stock.category}"></td>
+        <td th:text="${stock.quantity}"></td>
+        <td th:text="${stock.unit}"></td>
+        <td th:text="${stock.status}"></td>
+        <td th:text="${stock.remarks}"></td>
+        <td>
+            <a th:href="@{/stocks/edit/{id}(id=${stock.id})}">Edit</a>
+            <a th:href="@{/stocks/delete/{id}(id=${stock.id})}"
+               onclick="return confirm('Are you sure?')">Delete</a>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
