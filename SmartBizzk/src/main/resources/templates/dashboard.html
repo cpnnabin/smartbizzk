@@ -404,6 +404,31 @@
             font-size: 0.9rem;
         }
 
+        /* Logout Form */
+        .logout-form {
+            display: inline;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            padding: 0.75rem 1.2rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.2s ease;
+            width: 100%;
+            text-align: left;
+        }
+
+        .logout-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
         @media (max-width: 992px) {
             .container-fluid {
                 flex-direction: column;
@@ -439,12 +464,12 @@
         <span>SmartBiz</span>
     </div>
 
-    <nav>
-        <a href="/dashboard"><i class="fas fa-home"></i> Dashboard</a>
-        <a href="/parties"><i class="fas fa-users"></i> Parties</a>
-        <a href="/items"><i class="fas fa-box"></i> Items</a>
-        <a href="/reports"><i class="fas fa-chart-bar"></i> Reports</a>
-    </nav>
+<!--    <nav>-->
+<!--        <a href="/dashboard"><i class="fas fa-home"></i> Dashboard</a>-->
+<!--        <a href="/parties"><i class="fas fa-users"></i> Parties</a>-->
+<!--        <a href="/items"><i class="fas fa-box"></i> Items</a>-->
+<!--        <a href="/reports"><i class="fas fa-chart-bar"></i> Reports</a>-->
+<!--    </nav>-->
 
     <div class="header-controls">
         <button class="toggle-btn" id="darkModeToggle" title="Toggle dark mode">
@@ -460,7 +485,12 @@
             <div class="dropdown-menu" id="dropdownMenu">
                 <a href="/profile"><i class="fas fa-user"></i> Profile</a>
                 <a href="/settings"><i class="fas fa-cog"></i> Settings</a>
-                <a href="/logout" style="color: #dc3545"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                <!-- Fixed logout form -->
+                <form th:action="@{/logout}" method="post" class="logout-form">
+                    <button type="submit" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -501,6 +531,9 @@
             <i class="fas fa-chart-line"></i> Records
         </a>
         <a href="/reports">
+            <i class="fas fa-chart-bar"></i> Reports
+        </a>
+        <a href="/api/confirmation-letter">
             <i class="fas fa-chart-bar"></i> Reports
         </a>
     </aside>
@@ -563,25 +596,29 @@
             </div>
         </div>
 
-        <!-- Recent Activity -->
         <div class="recent-activity">
             <h4 class="mb-3"><i class="fas fa-clock me-2"></i>Recent Activity</h4>
 
-            <!-- Recent Sales Invoices -->
             <div th:if="${recentSalesInvoices != null and !recentSalesInvoices.empty}">
+                <!--/*@thymesVar id="recentSalesInvoices" type=""*/-->
                 <div th:each="invoice : ${recentSalesInvoices}" class="activity-item">
                     <div class="activity-icon activity-sale">
                         <i class="fas fa-file-invoice"></i>
                     </div>
                     <div class="activity-details">
-                        <div class="activity-title" th:text="'Invoice #' + ${invoice.id} + ' - ' + ${invoice.party?.name ?: 'Unknown Party'}">New sale created</div>
-                        <div class="activity-time" th:text="${#temporals.format(invoice.invoiceDate, 'dd MMM yyyy')}">Today</div>
+                        <div class="activity-title"
+                             th:text="'Invoice #' + ${invoice.id} + ' - ' + (${invoice.party != null and invoice.party.name != null ? invoice.party.name : 'Unknown Party'})">
+                            New sale created
+                        </div>
+                        <div class="activity-time"
+                             th:text="${#temporals.format(invoice.invoiceDate, 'dd MMM yyyy')}">Today</div>
                     </div>
-                    <div class="activity-amount text-primary" th:text="'₹' + ${#numbers.formatDecimal(invoice.totalAmount, 0, 'COMMA', 2, 'POINT')}">₹0.00</div>
+                    <div class="activity-amount text-primary"
+                         th:text="'₹' + ${#numbers.formatDecimal(invoice.totalAmount, 0, 'COMMA', 2, 'POINT')}">₹0.00</div>
                 </div>
             </div>
 
-            <!-- Recent Payments In -->
+            <!-- Fixed the duplicate div issue -->
             <div th:if="${recentPaymentsIn != null and !recentPaymentsIn.empty}">
                 <div th:each="payment : ${recentPaymentsIn}" class="activity-item">
                     <div class="activity-icon activity-income">
@@ -595,7 +632,6 @@
                 </div>
             </div>
 
-            <!-- Recent Expenses -->
             <div th:if="${recentExpenses != null and !recentExpenses.empty}">
                 <div th:each="expense : ${recentExpenses}" class="activity-item">
                     <div class="activity-icon activity-expense">
@@ -609,7 +645,6 @@
                 </div>
             </div>
 
-            <!-- Fallback message if no recent activity -->
             <div th:if="${(recentSalesInvoices == null or recentSalesInvoices.empty) and (recentPaymentsIn == null or recentPaymentsIn.empty) and (recentExpenses == null or recentExpenses.empty)}" class="text-center text-muted py-4">
                 <i class="fas fa-info-circle fa-2x mb-2"></i>
                 <p>No recent activity to display</p>
@@ -663,14 +698,6 @@
     // Prevent dropdown from closing when clicking inside
     dropdownMenu.addEventListener('click', (e) => {
         e.stopPropagation();
-    });
-    // Logout button (redirect to /login)
-    const logoutBtn = document.getElementById('logoutBtn');
-    logoutBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        // Here replace with your actual logout logic, like calling backend API or clearing tokens
-        // For demo just redirect
-        window.location.href = '/login';
     });
 </script>
 </body>

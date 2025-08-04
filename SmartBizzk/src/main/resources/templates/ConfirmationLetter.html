@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Business Transaction Confirmation Letter - SmartBiz</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #29AD81;
+            --primary-dark: #218a68;
+            --bg-color: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --text-color: #212529;
+            --border-color: #dee2e6;
+            --card-bg: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-color: #ffffff;
+            --border-color: #404040;
+            --card-bg: #2d2d2d;
+        }
+
+        * {
+            transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-color);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .navbar-custom {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            background: var(--primary-color);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            color: white;
+        }
+
+        .form-control, .form-select {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .form-control:focus, .form-select:focus {
+            background-color: var(--card-bg);
+            border-color: var(--primary-color);
+            color: var(--text-color);
+            box-shadow: 0 0 0 0.2rem rgba(41, 173, 129, 0.25);
+        }
+
+        .confirmation-letter {
+            background: white;
+            color: black;
+            padding: 40px;
+            font-size: 14px;
+            line-height: 1.6;
+            font-family: 'Times New Roman', serif;
+            min-height: 800px;
+        }
+
+        .letter-header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 20px;
+        }
+
+        .company-info {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .letter-meta {
+            margin: 20px 0;
+        }
+
+        .letter-content {
+            margin: 30px 0;
+            text-align: justify;
+        }
+
+        .transaction-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .transaction-table th,
+        .transaction-table td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .transaction-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+
+        .transaction-table .amount {
+            text-align: right;
+        }
+
+        .signature-section {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 80px;
+            margin-bottom: 40px;
+        }
+
+        .signature-box {
+            text-align: center;
+            width: 250px;
+        }
+
+        .signature-line {
+            border-bottom: 1px solid black;
+            height: 60px;
+            margin-bottom: 10px;
+        }
+
+        .stamp-box {
+            border: 1px solid black;
+            height: 80px;
+            width: 150px;
+            margin: 10px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            .confirmation-letter {
+                padding: 20px;
+                font-size: 12px;
+            }
+            .signature-section {
+                margin-top: 60px;
+            }
+        }
+
+        .loading-spinner {
+            display: none;
+        }
+
+        .loading-spinner.show {
+            display: block;
+        }
+
+        .party-card {
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .party-card:hover {
+            background-color: rgba(41, 173, 129, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .party-card.selected {
+            background-color: rgba(41, 173, 129, 0.2);
+            border-color: var(--primary-color);
+        }
+
+        .alert-info {
+            background-color: rgba(41, 173, 129, 0.1);
+            border-color: var(--primary-color);
+            color: var(--text-color);
+        }
+    </style>
+</head>
+<body>
+<!-- Theme Toggle -->
+<button class="theme-toggle no-print" onclick="toggleTheme()">
+    <i class="fas fa-moon" id="theme-icon"></i>
+</button>
+
+<!-- Navigation -->
+<nav class="navbar navbar-custom text-white p-3 no-print">
+    <div class="container-fluid">
+        <h3 class="mb-0">
+            <i class="fas fa-file-contract me-2"></i>
+            Business Transaction Confirmation Letter
+        </h3>
+        <div class="d-flex gap-2">
+            <button class="btn btn-light btn-sm" onclick="window.location.href='ledger.html'">
+                <i class="fas fa-book me-1"></i>Back to Ledger
+            </button>
+            <button class="btn btn-outline-light btn-sm" onclick="generateAllConfirmations()">
+                <i class="fas fa-layer-group me-1"></i>Generate All
+            </button>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Configuration Panel -->
+        <div class="col-md-4 no-print">
+            <!-- Company Settings -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-building me-2"></i>Company Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Company Name</label>
+                        <input type="text" class="form-control" id="companyName" value="B.S INTERNATIONAL PVT.LTD">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <input type="text" class="form-control" id="companyAddress" value="DHAPAKHEL, LALITPUR">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone</label>
+                        <input type="text" class="form-control" id="companyPhone" value="01-5275083">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">VAT NO</label>
+                            <input type="text" class="form-control" id="vatNo" value="606002732">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">REG NO</label>
+                            <input type="text" class="form-control" id="regNo" value="163279/073/074">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Party Selection -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="fas fa-users me-2"></i>Select Party</h6>
+                    <button class="btn btn-sm btn-outline-primary" onclick="refreshParties()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="p-3">
+                        <input type="text" class="form-control mb-3" id="partySearch" placeholder="Search parties..." onkeyup="filterParties()">
+                    </div>
+                    <div id="partyList" style="max-height: 300px; overflow-y: auto;">
+                        <div class="loading-spinner text-center p-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading parties...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Letter Configuration -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-cog me-2"></i>Letter Configuration</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Financial Year</label>
+                        <select class="form-select" id="financialYear" onchange="generateLetter()">
+                            <option value="2079-80">2079-80</option>
+                            <option value="2080-81">2080-81</option>
+                            <option value="2081-82">2081-82</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Letter Date (B.S.)</label>
+                        <input type="text" class="form-control" id="letterDate" value="2081/04/01" onchange="generateLetter()">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Sender Name</label>
+                        <input type="text" class="form-control" id="senderName" value="Nabin Dhakal" onchange="generateLetter()">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Sender Designation</label>
+                        <input type="text" class="form-control" id="senderDesignation" value="Accountant" onchange="generateLetter()">
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" onclick="generateLetter()" id="generateBtn" disabled>
+                            <i class="fas fa-file-alt me-2"></i>Generate Letter
+                        </button>
+                        <button class="btn btn-outline-info" onclick="previewLetter()" id="previewBtn" disabled>
+                            <i class="fas fa-eye me-2"></i>Preview
+                        </button>
+                        <button class="btn btn-outline-success" onclick="printLetter()" id="printBtn" disabled>
+                            <i class="fas fa-print me-2"></i>Print Letter
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="exportToPDF()" id="exportBtn" disabled>
+                            <i class="fas fa-file-pdf me-2"></i>Export PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Letter Display -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Confirmation Letter</h6>
+                    <div class="no-print">
+                        <small class="text-muted" id="letterStatus">Select a party to generate letter</small>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="confirmationLetterContent" class="confirmation-letter">
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-file-contract fa-4x mb-3 d-block" style="color: #ccc;"></i>
+                            <h4>Business Transaction Confirmation Letter</h4>
+                            <p class="mb-0">Select a party from the left panel to generate confirmation letter</p>
+                            <div class="alert alert-info mt-3 mx-5">
+                                <i class="fas fa-info-circle me-2"></i>
+                                This letter will be generated according to the format required for statutory audit purposes.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mb-0" id="loadingText">Processing...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Toast -->
+<div class="toast-container position-fixed top-0 end-0 p-3 no-print">
+    <div id="successToast" class="toast" role="alert">
+        <div class="toast-header">
+            <i class="fas fa-check-circle text-success me-2"></i>
+            <strong class="me-auto">Success</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="toastMessage">
+            Operation completed successfully!
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Configuration
+    const API_BASE_URL = 'http://localhost:3000'; // Change this to your backend URL
+
+    let currentSelectedParty = null;
+    let allParties = [];
+    let currentTheme = localStorage.getItem('theme') || 'light';
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        initTheme();
+        loadParties();
+    });
+
+    function initTheme() {
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        updateThemeIcon();
+    }
+
+    function toggleTheme() {
+        currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        localStorage.setItem('theme', currentTheme);
+        updateThemeIcon();
+    }
+
+    function updateThemeIcon() {
+        const icon = document.getElementById('theme-icon');
+        icon.className = currentTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+    }
+
+    // API Functions
+    async function loadParties() {
+        showLoadingSpinner(true);
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/parties`);
+            if (!response.ok) throw new Error('Failed to fetch parties');
+
+            allParties = await response.json();
+            displayParties(allParties);
+
+        } catch (error) {
+            console.error('Error loading parties:', error);
+            showError('Failed to load parties. Please check your connection.');
+            // Fallback to sample data
+            loadSampleParties();
+        } finally {
+            showLoadingSpinner(false);
+        }
+    }
+
+    function loadSampleParties() {
+        // Sample data as fallback
+        allParties = [
+            {
+                id: 1,
+                name: 'ABC Corporation',
+                panNo: '603772124',
+                address: 'Kathmandu, Nepal',
+                phone: '01-4444444',
+                type: 'Customer'
+            },
+            {
+                id: 2,
+                name: 'Raj and Gautam Suppliers',
+                panNo: '603772124',
+                address: 'Birgunj, Nepal',
+                phone: '051-999999',
+                type: 'Supplier'
+            },
+            {
+                id: 3,
+                name: 'Tech Solutions Ltd',
+                panNo: '609876543',
+                address: 'Bhaktapur, Nepal',
+                phone: '01-6666666',
+                type: 'Customer'
+            }
+        ];
+        displayParties(allParties);
+    }
+
+    function displayParties(parties) {
+        const partyList = document.getElementById('partyList');
+
+        if (!parties || parties.length === 0) {
+            partyList.innerHTML = `
+                    <div class="text-center p-4 text-muted">
+                        <i class="fas fa-users fa-2x mb-2 d-block"></i>
+                        <p>No parties found</p>
+                    </div>
+                `;
+            return;
+        }
+
+        partyList.innerHTML = parties.map(party => `
+                <div class="party-card ${currentSelectedParty?.id === party.id ? 'selected' : ''}"
+                     onclick="selectParty(${party.id})">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-bold">${party.name}</div>
+                            <small class="text-muted">
+                                <i class="fas fa-id-card me-1"></i>PAN: ${party.panNo || 'N/A'}
+                            </small><br>
+                            <small class="text-muted">
+                                <i class="fas fa-map-marker-alt me-1"></i>${party.address || 'N/A'}
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge ${party.type === 'Customer' ? 'bg-success' : 'bg-primary'}">${party.type}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+    }
+
+    function filterParties() {
+        const searchTerm = document.getElementById('partySearch').value.toLowerCase();
+        const filteredParties = allParties.filter(party =>
+            party.name.toLowerCase().includes(searchTerm) ||
+            (party.panNo && party.panNo.toLowerCase().includes(searchTerm)) ||
+            (party.address && party.address.toLowerCase().includes(searchTerm))
+        );
+        displayParties(filteredParties);
+    }
+
+    function refreshParties() {
+        loadParties();
+        showToast('Parties refreshed successfully!');
+    }
+
+    async function selectParty(partyId) {
+        currentSelectedParty = allParties.find(p => p.id === partyId);
+
+        // Update UI
+        displayParties(allParties);
+        enableButtons(true);
+
+        document.getElementById('letterStatus').textContent = `Selected: ${currentSelectedParty.name}`;
+
+        // Auto-generate letter
+        await generateLetter();
+    }
+
+    async function generateLetter() {
+        if (!currentSelectedParty) {
+            showError('Please select a party first');
+            return;
+        }
+
+        showLoadingModal('Generating confirmation letter...');
+
+        try {
+            const letterData = {
+                partyId: currentSelectedParty.id,
+                financialYear: document.getElementById('financialYear').value,
+                letterDate: document.getElementById('letterDate').value,
+                senderName: document.getElementById('senderName').value,
+                senderDesignation: document.getElementById('senderDesignation').value,
+                companyInfo: {
+                    name: document.getElementById('companyName').value,
+                    address: document.getElementById('companyAddress').value,
+                    phone: document.getElementById('companyPhone').value,
+                    vatNo: document.getElementById('vatNo').value,
+                    regNo: document.getElementById('regNo').value
+                }
+            };
+
+            const response = await fetch(`${API_BASE_URL}/api/confirmation-letter`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(letterData)
+            });
+
+            if (!response.ok) throw new Error('Failed to generate letter');
+
+            const letterContent = await response.json();
+            displayLetter(letterContent);
+
+        } catch (error) {
+            console.error('Error generating letter:', error);
+            // Fallback to client-side generation
+            generateLetterClientSide();
+        } finally {
+            hideLoadingModal();
+        }
+    }
+
+    function generateLetterClientSide() {
+        // Fallback client-side letter generation
+        const letterContent = {
+            companyInfo: {
+                name: document.getElementById('companyName').value,
+                address: document.getElementById('companyAddress').value,
+                phone: document.getElementById('companyPhone').value,
+                vatNo: document.getElementById('vatNo').value,
+                regNo: document.getElementById('regNo').value
+            },
+            letterDate: document.getElementById('letterDate').value,
+            party: currentSelectedParty,
+            financialYear: document.getElementById('financialYear').value,
+            transactions: {
+                openingBalance: 0,
+                sales: {
+                    taxableAmount: 2363610.00,
+                    vatAmount: 307269.30,
+                    totalAmount: 2670879.30
+                },
+                purchases: {
+                    taxableAmount: 0,
+                    vatAmount: 0,
+                    totalAmount: 0
+                },
+                closingBalance: 0
+            },
+            senderInfo: {
+                name: document.getElementById('senderName').value,
+                designation: document.getElementById('senderDesignation').value
+            }
+        };
+
+        displayLetter(letterContent);
+    }
+
+    function displayLetter(letterData) {
+        const content = document.getElementById('confirmationLetterContent');
+
+        content.innerHTML = `
+                <div class="letter-header">
+                    <div class="company-info">
+                        <div style="font-size: 12px; margin-bottom: 5px;">
+                            VAT NO: ${letterData.companyInfo.vatNo} &nbsp;&nbsp;&nbsp;&nbsp; REG NO: ${letterData.companyInfo.regNo}
+                        </div>
+                        <h3 style="margin: 10px 0; font-size: 18px;">${letterData.companyInfo.name}</h3>
+                        <div style="font-size: 14px;">
+                            ${letterData.companyInfo.address}, ${letterData.companyInfo.phone}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="letter-meta">
+                    <div style="text-align: right; margin-bottom: 20px;">
+                        <strong>DATE: ${letterData.letterDate}</strong>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <strong>TO,</strong><br>
+                        ${letterData.party.name}<br>
+                        ${letterData.party.address ? letterData.party.address + '<br>' : ''}
+                        <strong>PAN NO: ${letterData.party.panNo || 'N/A'}</strong>
+                    </div>
+                </div>
+
+                <div class="letter-content">
+                    <p><strong>Subject: Confirmation of business transaction for the FY ${letterData.financialYear}</strong></p>
+
+                    <p>Dear Sir/Madam,</p>
+
+                    <p>As per our accounting transaction records, following transaction has been done during the fiscal year ${letterData.financialYear}.</p>
+
+                    <p><strong>Transaction details as per our accounting records</strong></p>
+
+                    <p><strong>Opening Balance: Rs ${letterData.transactions.openingBalance.toLocaleString('en-IN') || 'Nill'}</strong></p>
+
+                    <table class="transaction-table">
+                        <thead>
+                            <tr>
+                                <th>Particulars</th>
+                                <th class="amount">Taxable amount</th>
+                                <th class="amount">VAT amount</th>
+                                <th class="amount">Total amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Sales</td>
+                                <td class="amount">${letterData.transactions.sales.taxableAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                                <td class="amount">${letterData.transactions.sales.vatAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                                <td class="amount">${letterData.transactions.sales.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                            </tr>
+                            <tr>
+                                <td>Purchased</td>
+                                <td class="amount">${letterData.transactions.purchases.taxableAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                                <td class="amount">${letterData.transactions.purchases.vatAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                                <td class="amount">${letterData.transactions.purchases.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p><strong>Closing Balance: ${letterData.transactions.closingBalance > 0 ? 'Rs ' + letterData.transactions.closingBalance.toLocaleString('en-IN') : 'Nill'}</strong></p>
+
+                    <p>If there is any mistake please send us the correct transaction details in your letter head within 15 days of receipt of this letter, else, this will be considered as accepted and confirmed.</p>
+
+                    <p>This information is required solely for statutory audit purpose. Your prompt attention to this request will be highly appreciated.</p>
+                </div>
+
+                <div class="signature-section">
+                    <div class="signature-box">
+                        <div><strong>Sender</strong></div>
+                        <div><strong>Transaction and balance confirmed by</strong></div>
+                        <div class="signature-line"></div>
+                        <div><strong>Signature:</strong></div>
+                        <div style="margin-top: 10px;"><strong>Signed by:</strong> ${letterData.senderInfo.name}</div>
+                        <div><strong>Designation:</strong> ${letterData.senderInfo.designation}</div>
+                        <div class="stamp-box">Stamp:</div>
+                    </div>
+
+                    <div class="signature-box">
+                        <div>&nbsp;</div>
+                        <div>&nbsp;</div>
+                        <div class="signature-line"></div>
+                        <div><strong>Signature:</strong></div>
+                        <div style="margin-top: 10px;"><strong>Signed by:</strong></div>
+                        <div><strong>Designation:</strong></div>
+                        <div class="stamp-box">Stamp:</div>
+                    </div>
+                </div>
+            `;
+
+        document.getElementById('letterStatus').textContent = `Letter generated for ${letterData.party.name}`;
+        showToast('Confirmation letter generated successfully!');
+    }
+
+    function previewLetter() {
+        if (!currentSelectedParty) {
+            showError('Please select a party and generate letter first');
+            return;
+        }
+        // Letter is already displayed, maybe add zoom functionality
+        showToast('Letter preview is already displayed');
+    }
+
+    function printLetter() {
+        if (!currentSelectedParty) {
+            showError('Please select a party and generate letter first');
+            return;
+        }
+        window.print();
+    }
+
+    function exportToPDF() {
+        if (!currentSelectedParty) {
+            showError('Please select a party and generate letter first');
+            return;
+        }
+
+        showLoadingModal('Generating PDF...');
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // Get letter content
+        const letterElement = document.getElementById('confirmationLetterContent');
+
+        // Use html2canvas for better formatting
+        const canvas = await html2canvas(letterElement, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            allowTaint: true,
+            letterRendering: true,
+            onclone: (clonedDoc) => {
+                // Apply any additional modifications to the cloned document
+                clonedDoc.getElementById('pdf-export-content').style.boxShadow = 'none';
+            }
+        });
+
+        // Remove temporary styles
+        document.head.removeChild(pdfStyles);
+        letterElement.removeAttribute('id');
+
+        const imgData = canvas.toDataURL('image/png', 1.0);
+        const pdfWidth = doc.internal.pageSize.getWidth();
+        const pdfHeight = doc.internal.pageSize.getHeight();
+
+        // Calculate image dimensions to fit the PDF page
+        const imgWidth = pdfWidth - 20; // 10mm margins on each side
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        // Add first page
+        doc.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight, undefined, 'FAST');
+
+        // Add additional pages if content is taller than one page
+        let heightLeft = imgHeight;
+        let position = 0;
+        const pageHeight = pdfHeight - 20; // 10mm top and bottom margins
+
+        while (heightLeft >= 0) {
+            position = heightLeft - pageHeight;
+            doc.addPage();
+            doc.addImage(imgData, 'PNG', 10, -position, imgWidth, imgHeight, undefined, 'FAST');
+            heightLeft -= pageHeight;
+        }
+
+        // Generate filename
+        const partyName = currentSelectedParty.name.replace(/[^a-zA-Z0-9]/g, '_');
+        const financialYear = document.getElementById('financialYear').value.replace('/', '-');
+        const filename = `Confirmation_Letter_${partyName}_${financialYear}.pdf`;
+
+        // Save the PDF
+        doc.save(filename);
+        showToast('PDF exported successfully!');
+
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        showError('Failed to generate PDF: ' + error.message);
+    } finally {
+        hideLoadingModal();
+    }
+    }
+</script>
+</body>
+</html>

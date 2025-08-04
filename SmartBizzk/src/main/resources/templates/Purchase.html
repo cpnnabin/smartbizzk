@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,11 +10,145 @@
         :root {
             --primary-color: #29AD81;
             --primary-dark: #218a68;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
         }
-        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
-        .header-card { background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); }
-        .btn-primary { background-color: var(--primary-color); border-color: var(--primary-color); }
-        .btn-primary:hover { background-color: var(--primary-dark); border-color: var(--primary-dark); }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .header-card {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border: none;
+            box-shadow: 0 8px 25px rgba(41, 173, 129, 0.2);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(41, 173, 129, 0.3);
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(41, 173, 129, 0.1);
+            transform: scale(1.01);
+            transition: all 0.2s ease;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .supplier-avatar {
+            background: linear-gradient(135deg, var(--info-color), #138496);
+            transition: all 0.3s ease;
+        }
+
+        .supplier-avatar:hover {
+            transform: rotate(360deg);
+        }
+
+        .btn-group .btn {
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline-danger:hover,
+        .btn-outline-info:hover {
+            transform: translateY(-1px);
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-container .btn {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+        }
+
+        .empty-state {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .cost-display {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: var(--danger-color);
+        }
+
+        .quantity-badge {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            padding: 0.3em 0.6em;
+            border-radius: 0.5rem;
+            font-size: 0.85em;
+        }
+
+        .table th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .date-display {
+            font-family: 'Courier New', monospace;
+            font-weight: 500;
+            color: #6c757d;
+        }
+
+        .supplier-name {
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+
+        .item-name {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .filter-buttons .btn {
+            margin-right: 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .filter-buttons .btn.active {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -25,15 +159,92 @@
                 <h2 class="mb-0"><i class="fas fa-shopping-bag me-2"></i>Purchase Management</h2>
                 <p class="mb-0 opacity-75">Track your purchases and inventory</p>
             </div>
-            <a href="/purchase/new" class="btn btn-light btn-lg">
+            <button class="btn btn-light btn-lg" onclick="showNewPurchaseModal()">
                 <i class="fas fa-plus me-2"></i>New Purchase
-            </a>
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted mb-1">Total Purchases</h6>
+                            <h4 class="mb-0" id="totalPurchases">0</h4>
+                        </div>
+                        <div class="text-primary">
+                            <i class="fas fa-shopping-bag fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted mb-1">Total Cost</h6>
+                            <h4 class="mb-0 text-danger" id="totalCost">₹0</h4>
+                        </div>
+                        <div class="text-danger">
+                            <i class="fas fa-rupee-sign fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted mb-1">Total Items</h6>
+                            <h4 class="mb-0 text-info" id="totalItems">0</h4>
+                        </div>
+                        <div class="text-info">
+                            <i class="fas fa-boxes fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted mb-1">Suppliers</h6>
+                            <h4 class="mb-0 text-success" id="totalSuppliers">0</h4>
+                        </div>
+                        <div class="text-success">
+                            <i class="fas fa-truck fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="card shadow-sm">
-        <div class="card-header bg-white">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Purchase History</h5>
+            <div class="d-flex gap-3 align-items-center">
+                <div class="filter-buttons btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary btn-sm active" data-period="all">All Time</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-period="week">This Week</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-period="month">This Month</button>
+                </div>
+                <div class="search-container" style="width: 300px;">
+                    <input type="text" class="form-control pe-5" placeholder="Search purchases..." id="searchInput">
+                    <button class="btn btn-outline-secondary btn-sm" type="button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -44,31 +255,13 @@
                         <th>Supplier</th>
                         <th>Item</th>
                         <th>Quantity</th>
+                        <th>Unit Price</th>
                         <th>Total Cost</th>
                         <th>Actions</th>
                     </tr>
                     </thead>
-                    <tbody>
-                    <tr th:each="purchase : ${purchases}">
-                        <td th:text="${purchase.purchaseDate}">2025-01-01</td>
-                        <td th:text="${purchase.supplierName}">Supplier Name</td>
-                        <td th:text="${purchase.itemName}">Item Name</td>
-                        <td th:text="${purchase.quantity}">10</td>
-                        <td th:text="'₹' + ${purchase.totalCost}">₹1000</td>
-                        <td>
-                            <a th:href="@{/purchase/delete/{id}(id=${purchase.id})}"
-                               class="btn btn-sm btn-outline-danger"
-                               onclick="return confirm('Delete this purchase?')">
-                                <i class="fas fa-trash"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    <tr th:if="${#lists.isEmpty(purchases)}">
-                        <td colspan="6" class="text-center text-muted py-4">
-                            <i class="fas fa-shopping-bag fa-2x mb-2 d-block"></i>
-                            No purchases found. <a href="/purchase/new">Add your first purchase</a>
-                        </td>
-                    </tr>
+                    <tbody id="purchasesTableBody">
+                    <!-- Purchases will be populated by JavaScript -->
                     </tbody>
                 </table>
             </div>
@@ -76,12 +269,302 @@
     </div>
 
     <div class="mt-4">
-        <a href="/dashboard" class="btn btn-outline-secondary">
+        <button class="btn btn-outline-secondary" onclick="goToDashboard()">
             <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-        </a>
+        </button>
+    </div>
+</div>
+
+<!-- New Purchase Modal -->
+<div class="modal fade" id="newPurchaseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Purchase</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newPurchaseForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="supplierName" class="form-label">Supplier Name</label>
+                            <input type="text" class="form-control" id="supplierName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="purchaseDate" class="form-label">Purchase Date</label>
+                            <input type="date" class="form-control" id="purchaseDate" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="itemName" class="form-label">Item Name</label>
+                            <input type="text" class="form-control" id="itemName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="quantity" class="form-label">Quantity</label>
+                            <input type="number" class="form-control" id="quantity" min="1" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="unitPrice" class="form-label">Unit Price (₹)</label>
+                            <input type="number" class="form-control" id="unitPrice" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="totalCostDisplay" class="form-label">Total Cost (₹)</label>
+                            <input type="text" class="form-control" id="totalCostDisplay" readonly>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="addPurchase()">Add Purchase</button>
+            </div>
+        </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Sample data
+    let purchases = [
+        { id: 1, purchaseDate: '2025-02-01', supplierName: 'Tech Supplies Ltd.', itemName: 'Laptop Batteries', quantity: 25, unitPrice: 1200, totalCost: 30000, notes: 'Bulk order discount applied' },
+        { id: 2, purchaseDate: '2025-01-28', supplierName: 'Office Equipment Co.', itemName: 'Wireless Keyboards', quantity: 15, unitPrice: 800, totalCost: 12000, notes: 'For new workstations' },
+        { id: 3, purchaseDate: '2025-01-25', supplierName: 'Digital Solutions', itemName: 'USB Drives', quantity: 50, unitPrice: 300, totalCost: 15000, notes: '32GB capacity' },
+        { id: 4, purchaseDate: '2025-01-22', supplierName: 'Component World', itemName: 'RAM Modules', quantity: 10, unitPrice: 2500, totalCost: 25000, notes: '16GB DDR4' },
+        { id: 5, purchaseDate: '2025-01-20', supplierName: 'Network Systems', itemName: 'Ethernet Cables', quantity: 100, unitPrice: 50, totalCost: 5000, notes: 'Cat6 cables' }
+    ];
+
+    let nextId = 6;
+    let currentPeriod = 'all';
+
+    function formatDate(dateString) {
+        return new Date(dateString).toLocaleDateString('en-IN');
+    }
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            minimumFractionDigits: 0
+        }).format(amount);
+    }
+
+    function getSupplierInitials(name) {
+        return name.split(' ').map(word => word[0]).join('').toUpperCase();
+    }
+
+    function updateStats() {
+        const filteredPurchases = getFilteredPurchases();
+        const totalPurchases = filteredPurchases.length;
+        const totalCost = filteredPurchases.reduce((sum, purchase) => sum + purchase.totalCost, 0);
+        const totalItems = filteredPurchases.reduce((sum, purchase) => sum + purchase.quantity, 0);
+        const uniqueSuppliers = new Set(filteredPurchases.map(purchase => purchase.supplierName)).size;
+
+        document.getElementById('totalPurchases').textContent = totalPurchases;
+        document.getElementById('totalCost').textContent = formatCurrency(totalCost);
+        document.getElementById('totalItems').textContent = totalItems;
+        document.getElementById('totalSuppliers').textContent = uniqueSuppliers;
+    }
+
+    function renderPurchases(purchasesToRender = purchases) {
+        const tbody = document.getElementById('purchasesTableBody');
+
+        if (purchasesToRender.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4 empty-state">
+                        <i class="fas fa-shopping-bag fa-2x mb-2 d-block"></i>
+                        No purchases found. <button class="btn btn-link p-0" onclick="showNewPurchaseModal()">Add your first purchase</button>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = purchasesToRender.map(purchase => `
+            <tr>
+                <td class="date-display">${formatDate(purchase.purchaseDate)}</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="supplier-avatar text-white rounded-circle d-flex align-items-center justify-content-center me-3"
+                             style="width: 35px; height: 35px; font-size: 0.8em;">
+                            ${getSupplierInitials(purchase.supplierName)}
+                        </div>
+                        <span class="supplier-name">${purchase.supplierName}</span>
+                    </div>
+                </td>
+                <td class="item-name">${purchase.itemName}</td>
+                <td><span class="quantity-badge">${purchase.quantity}</span></td>
+                <td class="cost-display">${formatCurrency(purchase.unitPrice)}</td>
+                <td class="cost-display">${formatCurrency(purchase.totalCost)}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-info" title="View Details" onclick="viewPurchase(${purchase.id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" title="Delete" onclick="deletePurchase(${purchase.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function showNewPurchaseModal() {
+        // Set today's date as default
+        document.getElementById('purchaseDate').value = new Date().toISOString().split('T')[0];
+        const modal = new bootstrap.Modal(document.getElementById('newPurchaseModal'));
+        modal.show();
+    }
+
+    function addPurchase() {
+        const supplierName = document.getElementById('supplierName').value;
+        const purchaseDate = document.getElementById('purchaseDate').value;
+        const itemName = document.getElementById('itemName').value;
+        const quantity = parseInt(document.getElementById('quantity').value);
+        const unitPrice = parseFloat(document.getElementById('unitPrice').value);
+        const notes = document.getElementById('notes').value;
+
+        if (!supplierName || !purchaseDate || !itemName || !quantity || !unitPrice) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        const newPurchase = {
+            id: nextId++,
+            purchaseDate: purchaseDate,
+            supplierName: supplierName,
+            itemName: itemName,
+            quantity: quantity,
+            unitPrice: unitPrice,
+            totalCost: quantity * unitPrice,
+            notes: notes || ''
+        };
+
+        purchases.unshift(newPurchase); // Add to beginning of array
+        renderPurchases(getFilteredPurchases());
+        updateStats();
+
+        // Reset form
+        document.getElementById('newPurchaseForm').reset();
+
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('newPurchaseModal'));
+        modal.hide();
+
+        // Show success message
+        showToast('Purchase added successfully!', 'success');
+    }
+
+    function viewPurchase(id) {
+        const purchase = purchases.find(p => p.id === id);
+        if (purchase) {
+            alert(`Purchase Details:\n\nSupplier: ${purchase.supplierName}\nItem: ${purchase.itemName}\nQuantity: ${purchase.quantity}\nUnit Price: ${formatCurrency(purchase.unitPrice)}\nTotal Cost: ${formatCurrency(purchase.totalCost)}\nDate: ${formatDate(purchase.purchaseDate)}\nNotes: ${purchase.notes || 'None'}`);
+        }
+    }
+
+    function deletePurchase(id) {
+        if (confirm('Are you sure you want to delete this purchase?')) {
+            purchases = purchases.filter(purchase => purchase.id !== id);
+            renderPurchases(getFilteredPurchases());
+            updateStats();
+            showToast('Purchase deleted successfully!', 'success');
+        }
+    }
+
+    function getFilteredPurchases() {
+        if (currentPeriod === 'all') {
+            return purchases;
+        }
+
+        const now = new Date();
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        return purchases.filter(purchase => {
+            const purchaseDate = new Date(purchase.purchaseDate);
+            if (currentPeriod === 'week') {
+                return purchaseDate >= startOfWeek;
+            } else if (currentPeriod === 'month') {
+                return purchaseDate >= startOfMonth;
+            }
+            return true;
+        });
+    }
+
+    function showToast(message, type = 'info') {
+        // Simple toast notification
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} position-fixed`;
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        toast.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close float-end" onclick="this.parentElement.remove()"></button>
+        `;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.remove();
+            }
+        }, 3000);
+    }
+
+    function goToDashboard() {
+        alert('Redirecting to dashboard...');
+    }
+
+    // Auto-calculate total cost
+    document.getElementById('quantity').addEventListener('input', calculateTotal);
+    document.getElementById('unitPrice').addEventListener('input', calculateTotal);
+
+    function calculateTotal() {
+        const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+        const unitPrice = parseFloat(document.getElementById('unitPrice').value) || 0;
+        const total = quantity * unitPrice;
+        document.getElementById('totalCostDisplay').value = total > 0 ? formatCurrency(total) : '';
+    }
+
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        const filter = this.value.toLowerCase();
+        const filteredPurchases = getFilteredPurchases().filter(purchase =>
+            purchase.supplierName.toLowerCase().includes(filter) ||
+            purchase.itemName.toLowerCase().includes(filter) ||
+            purchase.notes.toLowerCase().includes(filter)
+        );
+        renderPurchases(filteredPurchases);
+    });
+
+    // Period filter functionality
+    document.querySelectorAll('.filter-buttons .btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remove active class from all buttons
+            document.querySelectorAll('.filter-buttons .btn').forEach(b => b.classList.remove('active'));
+            // Add active class to clicked button
+            this.classList.add('active');
+
+            // Update current period
+            currentPeriod = this.dataset.period;
+
+            // Render filtered purchases
+            renderPurchases(getFilteredPurchases());
+            updateStats();
+        });
+    });
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', function() {
+        renderPurchases();
+        updateStats();
+    });
+</script>
 </body>
 </html>
